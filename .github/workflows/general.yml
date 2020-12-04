@@ -17,7 +17,6 @@ jobs:
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: newsletter
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -27,11 +26,16 @@ jobs:
           toolchain: stable
           override: true
       - name: Migrate database
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PASSWORD: password
         run: |
           sudo apt-get install libpq-dev -y
           cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
           SKIP_DOCKER=true ./scripts/init_db.sh
       - uses: actions-rs/cargo@v1
+        env:
+          DATABASE_URL: postgres://postgres:password@postgres:5432/newsletter
         with:
           command: test
 
@@ -55,6 +59,14 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PASSWORD: password
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -63,8 +75,18 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Migrate database
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PASSWORD: password
+        run: |
+          sudo apt-get install libpq-dev -y
+          cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
+          SKIP_DOCKER=true ./scripts/init_db.sh
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
+        env:
+          DATABASE_URL: postgres://postgres:password@postgres:5432/newsletter
         with:
           command: clippy
           args: -- -D warnings
