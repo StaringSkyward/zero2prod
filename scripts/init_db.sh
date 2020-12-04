@@ -2,7 +2,7 @@
 set -x
 set -eo pipefail
 
-DB_USER=${POSTGRES_USER:=postgres}
+DB_USER="${POSTGRES_USER:=postgres}"
 DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
 DB_NAME="${POSTGRES_DB:=newsletter}"
 DB_PORT="${POSTGRES_PORT:=5432}"
@@ -16,14 +16,13 @@ then
     -e POSTGRES_USER=${DB_USER} \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
     -e POSTGRES_DB=${DB_NAME} \
-    -p "${DB_PORT}:${DB_PORT}" \
+    -p "${DB_PORT}":5432" \
     -d postgres \
     postgres -N 1000
 fi
 
 # Keep pinging Postgres until it's ready to accept commands
-export PGPASSWORD="${DB_PASSWORD}"
-until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
+until PGPASSWORD="${DB_PASSWORD}" psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
   >&2 echo "Postgres is still unavailable - sleeping"
   sleep 1
 done
@@ -37,3 +36,5 @@ sqlx database create
 >&2 echo "Running migrations..."
 mkdir -p migrations
 sqlx migrate run
+
+>&2 echo "Postgres has been migrated, ready to go!"
