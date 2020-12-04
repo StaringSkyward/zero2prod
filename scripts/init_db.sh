@@ -26,9 +26,15 @@ then
 fi
 
 # Keep pinging Postgres until it's ready to accept commands
+WAITED=0
 until PGPASSWORD="${DB_PASSWORD}" psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
-  >&2 echo "Postgres is still unavailable - sleeping"
-  sleep 1
+  >&2 echo "Postgres is still unavailable after ~${WAITED} seconds - sleeping";
+  WAITED=`expr $WAITED + 2`;
+  if (($WAITED > 60)); then
+    >&2 echo "Timed out after waiting 60 seconds for Postgres to become available!";
+    exit 1;
+  fi
+  sleep 2;
 done
 
 >&2 echo "Postgres is up and running on port ${DB_PORT} - running migrations now!"
