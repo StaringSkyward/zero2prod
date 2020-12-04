@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
-  email: String,
-  name: String,
+    email: String,
+    name: String,
 }
 
 #[tracing::instrument(
@@ -17,36 +17,36 @@ pub struct FormData {
       name = %form.name
 ) )]
 pub async fn subscribe(
-  form: web::Form<FormData>,
-  pool: web::Data<PgPool>, // Renamed!
+    form: web::Form<FormData>,
+    pool: web::Data<PgPool>, // Renamed!
 ) -> Result<HttpResponse, HttpResponse> {
-  insert_subscriber(&pool, &form)
-    .await
-    .map_err(|_| HttpResponse::InternalServerError().finish())?;
+    insert_subscriber(&pool, &form)
+        .await
+        .map_err(|_| HttpResponse::InternalServerError().finish())?;
 
-  Ok(HttpResponse::Created().finish())
+    Ok(HttpResponse::Created().finish())
 }
 
 #[tracing::instrument(
-  name = "Saving new subscriber details in the database",
-  skip(form, pool)
+    name = "Saving new subscriber details in the database",
+    skip(form, pool)
 )]
 async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
-  sqlx::query!(
-    r#"
+    sqlx::query!(
+        r#"
       INSERT INTO subscriptions (id, email, name, subscribed_at)
       VALUES ($1, $2, $3, $4)
       "#,
-    Uuid::new_v4(),
-    form.email,
-    form.name,
-    Utc::now()
-  )
-  .execute(pool)
-  .await
-  .map_err(|e| {
-    tracing::error!("Failed to execute query: {:?}", e);
-    e
-  })?;
-  Ok(())
+        Uuid::new_v4(),
+        form.email,
+        form.name,
+        Utc::now()
+    )
+    .execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        e
+    })?;
+    Ok(())
 }
