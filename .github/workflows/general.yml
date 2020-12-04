@@ -14,6 +14,10 @@ jobs:
         image: postgres
         ports:
           - 5432:5432
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: newsletter
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -51,11 +55,6 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        ports:
-          - 5432:5432
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -65,11 +64,6 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
-      - name: Migrate database
-        run: |
-          sudo apt-get install libpq-dev -y
-          cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
-          SKIP_DOCKER=true ./scripts/init_db.sh
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
