@@ -9,10 +9,29 @@ pub struct FormData {
   name: String,
 }
 
+#[tracing::instrument(
+  name = "Adding a new subscriber",
+  skip(form, pool),
+  fields(
+      email = %form.email,
+      name = %form.name
+) )]
 pub async fn subscribe(
   form: web::Form<FormData>,
   pool: web::Data<PgPool>, // Renamed!
 ) -> Result<HttpResponse, HttpResponse> {
+  insert_subscriber(&pool, &form)
+    .await
+    .map_err(|_| HttpResponse::InternalServerError().finish())?;
+
+  Ok(HttpResponse::Created().finish())
+}
+
+#[tracing::instrument(
+  name = "Saving new subscriber details in the database",
+  skip(form, pool)
+)]
+async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
   sqlx::query!(
     r#"
       INSERT INTO subscriptions (id, email, name, subscribed_at)
@@ -23,12 +42,11 @@ pub async fn subscribe(
     form.name,
     Utc::now()
   )
-  // We got rid of the double-wrapping using .app_data()
-  .execute(pool.get_ref())
+  .execute(pool)
   .await
   .map_err(|e| {
-    println!("Failed to execute query: {}", e);
-    HttpResponse::InternalServerError().finish()
+    tracing::error!("Failed to execute query: {:?}", e);
+    e
   })?;
-  Ok(HttpResponse::Ok().finish())
+  Ok(())
 }
