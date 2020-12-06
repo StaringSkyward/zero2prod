@@ -15,7 +15,7 @@ path = "src/lib.rs"
 # have a look at the workspace feature - we'll cover it later on.
 [[bin]]
 path = "src/main.rs"
-name = "app"
+name = "zero2prod"
 
 
 [dependencies]
@@ -23,6 +23,7 @@ actix-rt = "1.1.1"
 actix-web = "3.0.0"
 chrono = "0.4.19"
 config = { version = "0.10.1", default-features = false, features = ["yaml"] }
+openssl-probe = "0.1.2"
 serde = "1.0.115"
 sqlx-cli = { version = "0.2.0", default-features = false, features = ["postgres"] }
 tokio = "0.2.22"
@@ -34,11 +35,12 @@ tracing-subscriber = { version = "0.2.12", features = ["registry", "env-filter"]
 tracing-bunyan-formatter = "0.1.7"
 tracing-log = "0.1.1"
 tracing-actix-web = "0.2.1"
+serde-aux = "1.1.0"
 
 [dependencies.sqlx]
 version = "0.4.1"
 default-features = false
-features = [ "runtime-async-std-native-tls", "macros", "postgres", "uuid", "chrono", "migrate", "tls"]
+features = [ "runtime-async-std-native-tls", "macros", "offline", "postgres", "uuid", "chrono", "migrate", "tls"]
 
 [dev-dependencies]
 lazy_static = "1.4.0"
