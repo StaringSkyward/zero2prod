@@ -28,13 +28,13 @@ jobs:
       - name: Migrate database
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
-          POSTGRES_HOST: localhost
-          POSTGRES_PASSWORD: password
         run: |
           sudo apt-get install libpq-dev -y
           cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
           SKIP_DOCKER=true ./scripts/init_db.sh
       - name: Check sqlx metadata file
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
         run: cargo sqlx prepare --check -- --bin zero2prod
       - uses: actions-rs/cargo@v1
         env:
