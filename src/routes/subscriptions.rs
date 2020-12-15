@@ -29,7 +29,7 @@ pub async fn subscribe(
         SubscriberName::parse(form.0.name).map_err(|_| HttpResponse::BadRequest().finish())?;
     let new_subscriber = NewSubscriber {
         email: form.0.email,
-        name: name,
+        name,
     };
     insert_subscriber(&pool, &new_subscriber)
         .await
