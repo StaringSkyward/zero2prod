@@ -29,7 +29,7 @@ fi
 
 # Keep pinging Postgres until it's ready to accept commands
 WAITED=0
-until PGPASSWORD="${DB_PASSWORD}" psql -h "${POSTGRES_HOST}" -U "${DB_USER}" -p "${DB_PORT}" -d postgres -c '\q'; do
+until PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -U "${DB_USER}" -p "${DB_PORT}" -d postgres -c '\q'; do
   >&2 echo "Postgres is still unavailable after ~${WAITED} seconds - sleeping";
   WAITED=`expr $WAITED + 2`;
   if (($WAITED > 60)); then
