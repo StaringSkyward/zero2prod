@@ -7,8 +7,6 @@ use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    openssl_probe::init_ssl_cert_env_vars();
-
     let subscriber = get_subscriber("zero2prod".into(), "info".into());
     init_subscriber(subscriber);
 

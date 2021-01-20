@@ -8,7 +8,7 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:12
@@ -19,12 +19,11 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Migrate database
         run: |
@@ -37,14 +36,13 @@ jobs:
 
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
@@ -54,7 +52,7 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:12
@@ -65,12 +63,11 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
       - run: rustup component add clippy
       - name: Migrate database
@@ -85,7 +82,7 @@ jobs:
 
   coverage:
     name: Code coverage
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:12
@@ -99,10 +96,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install nightly toolchain
+      - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
 
       - name: Migrate database
