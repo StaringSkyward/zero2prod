@@ -8,15 +8,16 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres
+        image: postgres:12
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PASSWORD: password
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -26,25 +27,17 @@ jobs:
           toolchain: stable
           override: true
       - name: Migrate database
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
         run: |
           sudo apt-get install libpq-dev -y
           cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
           SKIP_DOCKER=true ./scripts/init_db.sh
-      - name: Check sqlx metadata file
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
-        run: cargo sqlx prepare --check -- --bin zero2prod
       - uses: actions-rs/cargo@v1
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
         with:
           command: test
 
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -61,15 +54,16 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres
+        image: postgres:12
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PASSWORD: password
     steps:
       - uses: Swatinem/rust-cache@v1
       - uses: actions/checkout@v2
@@ -78,19 +72,45 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: rustup component add clippy
       - name: Migrate database
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PASSWORD: password
         run: |
           sudo apt-get install libpq-dev -y
           cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
           SKIP_DOCKER=true ./scripts/init_db.sh
-      - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
-        env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/newsletter
         with:
           command: clippy
           args: -- -D warnings
 
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Migrate database
+        run: |
+          sudo apt-get install libpq-dev -y
+          cargo install --version=0.2.0 sqlx-cli --no-default-features --features postgres
+          SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: '--ignore-tests'
