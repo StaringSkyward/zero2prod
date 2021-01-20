@@ -24,7 +24,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - name: Migrate database
         run: |
@@ -44,7 +44,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
@@ -70,7 +70,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - run: rustup component add clippy
       - name: Migrate database
@@ -99,10 +99,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           override: true
 
       - name: Migrate database
