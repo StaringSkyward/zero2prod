@@ -2,7 +2,6 @@ use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
-use zero2prod::email_client::EmailClient;
 use zero2prod::startup::run;
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
@@ -15,18 +14,18 @@ lazy_static::lazy_static! {
     };
 }
 
-pub struct TestApp {
+struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
+// Launch our application in the background
 async fn spawn_app() -> TestApp {
     // The first time `initialize` is invoked the code in `TRACING` is executed.
     // All other invocations will instead skip execution.
     lazy_static::initialize(&TRACING);
 
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
-    // We retrieve the port assigned to us by the OS
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
 
@@ -34,19 +33,9 @@ async fn spawn_app() -> TestApp {
     configuration.database.database_name = Uuid::new_v4().to_string();
     let connection_pool = configure_database(&configuration.database).await;
 
-    let sender_email = configuration
-        .email_client
-        .sender()
-        .expect("Invalid sender email address.");
-    let email_client = EmailClient::new(
-        configuration.email_client.base_url,
-        sender_email,
-        configuration.email_client.authorization_token,
-    );
-
-    let server =
-        run(listener, connection_pool.clone(), email_client).expect("Failed to bind address");
+    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
     let _ = tokio::spawn(server);
+
     TestApp {
         address,
         db_pool: connection_pool,
@@ -62,7 +51,6 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .execute(&*format!(r#"CREATE DATABASE "{}";"#, config.database_name))
         .await
         .expect("Failed to create database.");
-
     // Migrate database
     let connection_pool = PgPool::connect_with(config.with_db())
         .await
@@ -71,7 +59,6 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .run(&connection_pool)
         .await
         .expect("Failed to migrate the database");
-
     connection_pool
 }
 
@@ -95,7 +82,7 @@ async fn health_check_works() {
 }
 
 #[actix_rt::test]
-async fn subscribe_returns_a_200_for_valid_form_data() {
+async fn subscribe_returns_a_201_for_valid_form_data() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
@@ -111,7 +98,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .expect("Failed to execute request.");
 
     // Assert
-    assert_eq!(200, response.status().as_u16());
+    assert_eq!(201, response.status().as_u16());
 
     let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
         .fetch_one(&app.db_pool)
